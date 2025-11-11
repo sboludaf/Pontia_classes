@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Gestión de Notas - Profesor</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="header-icon">
+                    <i data-lucide="graduation-cap"></i>
+                </div>
+                <div>
+                    <h1>Sistema de Gestión de Notas</h1>
+                    <p class="subtitle">Panel del Profesor - AWS Lambda + DynamoDB</p>
+                </div>
+            </div>
+            <div class="aws-badge">
+                <i data-lucide="cloud"></i>
+                <span>AWS Powered</span>
+            </div>
+        </header>
+
+        <!-- Sección de Registro -->
+        <section class="card">
+            <div class="card-header">
+                <div class="card-title">
+                    <i data-lucide="user-plus"></i>
+                    <h2>Registrar Nueva Nota</h2>
+                </div>
+                <div class="status-badge" id="writeLambdaStatus">
+                    <i data-lucide="radio"></i>
+                    <span>Listo</span>
+                </div>
+            </div>
+            
+            <form id="notaForm" class="form">
+                <div class="form-group">
+                    <label for="nombre">
+                        <i data-lucide="user"></i>
+                        Nombre del Estudiante
+                    </label>
+                    <input 
+                        type="text" 
+                        id="nombre" 
+                        name="nombre" 
+                        placeholder="Ej: Juan Pérez" 
+                        required
+                        autocomplete="off"
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="calificacion">
+                        <i data-lucide="award"></i>
+                        Calificación (0-10)
+                    </label>
+                    <input 
+                        type="number" 
+                        id="calificacion" 
+                        name="calificacion" 
+                        placeholder="Ej: 8.5" 
+                        min="0"
+                        max="10"
+                        step="0.1"
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="nota">
+                        <i data-lucide="file-text"></i>
+                        Observación
+                    </label>
+                    <textarea 
+                        id="nota" 
+                        name="nota" 
+                        placeholder="Ej: Excelente participación en clase" 
+                        rows="3"
+                        required
+                    ></textarea>
+                </div>
+
+                <button type="submit" class="btn btn-primary" id="submitBtn">
+                    <i data-lucide="send"></i>
+                    <span>Registrar Nota</span>
+                </button>
+            </form>
+
+            <!-- Mensaje de éxito/error -->
+            <div id="message" class="message hidden"></div>
+        </section>
+
+        <!-- Sección de Listado -->
+        <section class="card">
+            <div class="card-header">
+                <div class="card-title">
+                    <i data-lucide="list"></i>
+                    <h2>Notas Registradas</h2>
+                </div>
+                <div class="actions">
+                    <select id="limitSelect" class="select">
+                        <option value="10">10 registros</option>
+                        <option value="20" selected>20 registros</option>
+                        <option value="50">50 registros</option>
+                    </select>
+                    <button class="btn btn-secondary" id="refreshBtn">
+                        <i data-lucide="refresh-cw"></i>
+                        <span>Actualizar</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Loading Spinner -->
+            <div id="loading" class="loading hidden">
+                <div class="spinner"></div>
+                <p>Cargando datos desde DynamoDB...</p>
+            </div>
+
+            <!-- Lista de Notas -->
+            <div id="notasList" class="notas-list"></div>
+
+            <!-- Empty State -->
+            <div id="emptyState" class="empty-state hidden">
+                <i data-lucide="inbox"></i>
+                <h3>No hay notas registradas</h3>
+                <p>Comienza registrando la primera nota usando el formulario de arriba</p>
+            </div>
+        </section>
+
+        <!-- Footer con información técnica -->
+        <footer class="footer">
+            <div class="footer-info">
+                <div class="info-item">
+                    <i data-lucide="database"></i>
+                    <span>DynamoDB</span>
+                </div>
+                <div class="info-item">
+                    <i data-lucide="zap"></i>
+                    <span>AWS Lambda</span>
+                </div>
+                <div class="info-item">
+                    <i data-lucide="code"></i>
+                    <span>Consola de Desarrollo (F12) para ver logs</span>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        // Inicializar iconos de Lucide
+        lucide.createIcons();
+    </script>
+</body>
+</html>
