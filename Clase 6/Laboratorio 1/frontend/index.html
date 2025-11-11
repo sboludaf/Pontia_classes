@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAG Lab - Kendra + Bedrock</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 RAG Lab</h1>
+            <p>Retrieval-Augmented Generation con Kendra y Bedrock</p>
+        </div>
+
+        <div class="content">
+            <!-- UPLOAD SECTION -->
+            <div class="card">
+                <h2>📄 Subir Documentos</h2>
+                <div id="uploadMessage" class="message"></div>
+                
+                <div class="upload-area" id="uploadArea">
+                    <input type="file" id="fileInput" accept=".pdf" hidden>
+                    <p>Arrastra un PDF aquí o haz clic para seleccionar</p>
+                </div>
+                
+                <button id="uploadBtn" class="button" disabled>Subir Documento</button>
+                
+                <div id="documentsList" class="documents-list"></div>
+            </div>
+
+            <!-- CHAT SECTION -->
+            <div class="card">
+                <h2>💬 Chat RAG</h2>
+                <div id="queryMessage" class="message"></div>
+                
+                <div id="chatBox" class="chat-box">
+                    <div id="chatMessages" class="chat-messages"></div>
+                </div>
+                
+                <div class="chat-input-area">
+                    <input 
+                        type="text" 
+                        id="queryInput" 
+                        placeholder="Escribe tu pregunta aquí..."
+                        class="chat-input"
+                    >
+                    <button id="sendBtn" class="button">Enviar</button>
+                </div>
+                
+                <!-- PREGUNTAS SUGERIDAS -->
+                <div id="suggestedQuestions" class="suggested-questions">
+                    <h3>📋 Preguntas Sugeridas</h3>
+                    <div class="questions-list">
+                        <p>• ¿Cuál es la tasa de desempleo juvenil en España?</p>
+                        <p>• ¿Qué tipo de contratos predominan entre los jóvenes?</p>
+                        <p>• ¿Cómo ha evolucionado el empleo juvenil en el último año?</p>
+                        <p>• ¿Qué sectores contratan más jóvenes?</p>
+                        <p>• ¿Cuál es el salario medio de los jóvenes?</p>
+                        <p>• ¿Qué formación tienen los jóvenes empleados?</p>
+                        <p>• ¿Cuáles son las principales dificultades para encontrar empleo?</p>
+                        <p>• ¿Qué políticas de empleo juvenil existen?</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>Laboratorio de RAG con Amazon Kendra y Bedrock</p>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,21 @@
+[project]
+name = "vector-dbs-lives"
+version = "0.1.0"
+description = "End2EndFlow"
+readme = "README.md"
+requires-python = "==3.12.11"
+dependencies = [
+    "fastapi>=0.117.1",
+    "google-genai>=1.38.0",
+    "grpcio==1.60.1",
+    "langchain-community>=0.3.30",
+    "langchain-google-genai>=2.1.12",
+    "langchain-huggingface>=0.3.1",
+    "langchain-qdrant>=0.2.1",
+    "llama-index>=0.14.2",
+    "llama-index-embeddings-google-genai>=0.3.1",
+    "llama-index-llms-google-genai>=0.5.1",
+    "llama-index-vector-stores-qdrant>=0.8.5",
+    "pypdf>=6.1.0",
+    "uvicorn>=0.36.0",
+]
