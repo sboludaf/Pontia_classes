@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Newsletter - Laboratorio SNS</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        @media (max-width: 768px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.3);
+        }
+
+        .card h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+            font-size: 0.95em;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 1em;
+            transition: border-color 0.3s ease;
+            font-family: inherit;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 6px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            width: 100%;
+        }
+
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .button:active {
+            transform: translateY(0);
+        }
+
+        .button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .button.secondary {
+            background: #f0f0f0;
+            color: #333;
+            border: 2px solid #667eea;
+        }
+
+        .button.secondary:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .message {
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            display: none;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            display: block;
+        }
+
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            display: block;
+        }
+
+        .message.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+            display: block;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 6px;
+            text-align: center;
+        }
+
+        .stat-box .number {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .stat-box .label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        .subscribers-list {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            margin-top: 15px;
+        }
+
+        .subscriber-item {
+            padding: 12px;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .subscriber-item:last-child {
+            border-bottom: none;
+        }
+
+        .subscriber-info {
+            flex: 1;
+        }
+
+        .subscriber-email {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .subscriber-status {
+            font-size: 0.85em;
+            color: #666;
+            margin-top: 3px;
+        }
+
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+
+        .status-confirmed {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(102, 126, 234, 0.3);
+            border-radius: 50%;
+            border-top-color: #667eea;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .admin-section {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 2px solid #e0e0e0;
+        }
+
+        .admin-section label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            margin-bottom: 15px;
+        }
+
+        .admin-section input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .admin-content {
+            display: none;
+            animation: slideIn 0.3s ease;
+        }
+
+        .admin-content.active {
+            display: block;
+        }
+
+        .footer {
+            text-align: center;
+            color: white;
+            margin-top: 40px;
+            opacity: 0.8;
+            font-size: 0.9em;
+        }
+
+        .config-section {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .config-section h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 1em;
+        }
+
+        .config-section p {
+            font-size: 0.85em;
+            color: #666;
+            margin-bottom: 8px;
+            word-break: break-all;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📧 Newsletter Lab</h1>
+            <p>Laboratorio SNS + Lambdas + SPA</p>
+        </div>
+
+        <div class="content">
+            <!-- SUSCRIPCIÓN -->
+            <div class="card">
+                <h2>Suscribirse</h2>
+                <div id="registerMessage" class="message"></div>
+                
+                <form id="registerForm">
+                    <div class="form-group">
+                        <label for="name">Nombre</label>
+                        <input type="text" id="name" name="name" placeholder="Tu nombre" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" id="email" name="email" placeholder="tu@email.com" required>
+                    </div>
+                    
+                    <button type="submit" class="button" id="registerBtn">Suscribirse</button>
+                </form>
+
+                <div class="config-section">
+                    <h3>ℹ️ Información</h3>
+                    <p>Al suscribirse, recibirá un email de confirmación de AWS SNS.</p>
+                    <p>Debe confirmar la suscripción para recibir mensajes.</p>
+                </div>
+            </div>
+
+            <!-- PANEL ADMINISTRADOR -->
+            <div class="card">
+                <h2>Panel Administrador</h2>
+                
+                <div class="admin-section">
+                    <label>
+                        <input type="checkbox" id="adminToggle">
+                        <span>Acceso Administrador</span>
+                    </label>
+                    
+                    <div id="adminKeyInput" style="display: none; margin-top: 15px;">
+                        <div class="form-group">
+                            <label for="adminKeyField">Clave de Administrador</label>
+                            <input type="password" id="adminKeyField" placeholder="Ingresa la clave de admin" required>
+                        </div>
+                        <button type="button" class="button" id="verifyAdminBtn">Verificar</button>
+                    </div>
+                </div>
+
+                <div id="adminContent" class="admin-content">
+                    <div id="adminMessage" class="message"></div>
+
+                    <div class="stats" id="stats">
+                        <div class="stat-box">
+                            <div class="number" id="totalCount">0</div>
+                            <div class="label">Total</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="number" id="confirmedCount">0</div>
+                            <div class="label">Confirmados</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="number" id="pendingCount">0</div>
+                            <div class="label">Pendientes</div>
+                        </div>
+                    </div>
+
+                    <button class="button secondary" id="refreshBtn" style="margin-bottom: 20px;">Actualizar Suscriptores</button>
+
+                    <div class="form-group">
+                        <label for="subject">Asunto del Mensaje</label>
+                        <input type="text" id="subject" placeholder="Asunto del email">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="message">Mensaje</label>
+                        <textarea id="message" placeholder="Escribe tu mensaje aquí..."></textarea>
+                    </div>
+
+                    <button type="button" class="button" id="publishBtn">Enviar a Confirmados</button>
+
+                    <div class="subscribers-list" id="subscribersList"></div>
+                </div>
+
+                <div class="config-section">
+                    <h3>🔐 Credenciales Admin</h3>
+                    <p>Clave: <strong>admin-secret-key-123</strong></p>
+                    <p style="font-size: 0.8em; margin-top: 8px; color: #999;">⚠️ En producción usar Cognito o API Keys seguras</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>Laboratorio de AWS SNS, Lambda y DynamoDB con CloudFormation</p>
+        </div>
+    </div>
+
+    <script>
+        // ==================== CONFIGURACIÓN (EMBEBIDA) ====================
+        const API_GATEWAY_URL = 'https://wuhlxighhe.execute-api.eu-west-1.amazonaws.com/prod';
+        
+        const CONFIG = {
+            registerUrl: `${API_GATEWAY_URL}/register`,
+            publishUrl: `${API_GATEWAY_URL}/publish`,
+            subscribersUrl: `${API_GATEWAY_URL}/subscribers`,
+            adminKey: null
+        };
+
+        let isAdminAuthenticated = false;
+
+        // ==================== INICIALIZACIÓN ====================
+        document.addEventListener('DOMContentLoaded', () => {
+            setupEventListeners();
+            console.log('✓ Configuración cargada correctamente');
+        });
+
+        function setupEventListeners() {
+            document.getElementById('registerForm').addEventListener('submit', handleRegister);
+            document.getElementById('adminToggle').addEventListener('change', toggleAdminPanel);
+            document.getElementById('verifyAdminBtn').addEventListener('click', verifyAdminKey);
+            document.getElementById('publishBtn').addEventListener('click', handlePublish);
+            document.getElementById('refreshBtn').addEventListener('click', loadSubscribers);
+        }
+
+        // ==================== REGISTRO ====================
+        async function handleRegister(e) {
+            e.preventDefault();
+
+            const name = document.getElementById('name').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const btn = document.getElementById('registerBtn');
+
+            if (!name || !email) {
+                showMessage('registerMessage', 'error', 'Por favor completa todos los campos');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading"></span> Registrando...';
+
+            try {
+                const response = await fetch(CONFIG.registerUrl, {
+                    method: 'POST',
+                    mode: 'cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, email })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showMessage('registerMessage', 'success', data.message);
+                    document.getElementById('registerForm').reset();
+                } else {
+                    showMessage('registerMessage', 'error', data.error || 'Error al registrar');
+                }
+            } catch (error) {
+                showMessage('registerMessage', 'error', `Error: ${error.message}`);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = 'Suscribirse';
+            }
+        }
+
+        // ==================== PANEL ADMIN ====================
+        function toggleAdminPanel(e) {
+            const adminKeyInput = document.getElementById('adminKeyInput');
+            const adminContent = document.getElementById('adminContent');
+            
+            if (e.target.checked) {
+                adminKeyInput.style.display = 'block';
+                adminContent.classList.remove('active');
+                isAdminAuthenticated = false;
+            } else {
+                adminKeyInput.style.display = 'none';
+                adminContent.classList.remove('active');
+                isAdminAuthenticated = false;
+                CONFIG.adminKey = null;
+            }
+        }
+
+        function verifyAdminKey() {
+            const adminKeyField = document.getElementById('adminKeyField');
+            const adminKey = adminKeyField.value.trim();
+
+            if (!adminKey) {
+                showMessage('adminMessage', 'error', 'Por favor ingresa la clave de administrador');
+                return;
+            }
+
+            CONFIG.adminKey = adminKey;
+            isAdminAuthenticated = true;
+
+            const adminKeyInput = document.getElementById('adminKeyInput');
+            const adminContent = document.getElementById('adminContent');
+            
+            adminKeyInput.style.display = 'none';
+            adminContent.classList.add('active');
+            
+            showMessage('adminMessage', 'success', '✓ Acceso de administrador verificado');
+            loadSubscribers();
+        }
+
+        async function loadSubscribers() {
+            if (!isAdminAuthenticated || !CONFIG.adminKey) {
+                showMessage('adminMessage', 'error', 'Por favor verifica tu clave de administrador primero');
+                return;
+            }
+
+            const btn = document.getElementById('refreshBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading"></span> Cargando...';
+
+            try {
+                const url = `${CONFIG.subscribersUrl}?admin_key=${CONFIG.adminKey}`;
+                const response = await fetch(url, {
+                    method: 'GET',
+                    mode: 'cors'
+                });
+                const data = await response.json();
+
+                if (response.ok) {
+                    document.getElementById('totalCount').textContent = data.total;
+                    document.getElementById('confirmedCount').textContent = data.confirmed;
+                    document.getElementById('pendingCount').textContent = data.not_confirmed;
+
+                    renderSubscribers(data.subscribers);
+                } else {
+                    showMessage('adminMessage', 'error', data.error || 'Error al cargar suscriptores');
+                }
+            } catch (error) {
+                showMessage('adminMessage', 'error', `Error: ${error.message}`);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = 'Actualizar Suscriptores';
+            }
+        }
+
+        function renderSubscribers(subscribers) {
+            const list = document.getElementById('subscribersList');
+            
+            if (subscribers.length === 0) {
+                list.innerHTML = '<div style="padding: 20px; text-align: center; color: #999;">No hay suscriptores</div>';
+                return;
+            }
+
+            list.innerHTML = subscribers.map(sub => `
+                <div class="subscriber-item">
+                    <strong>${sub.name}</strong>
+                    <p>${sub.email}</p>
+                </div>
+            `).join('');
+        }
+
+        // ==================== PUBLICAR MENSAJE ====================
+        async function handlePublish() {
+            if (!isAdminAuthenticated || !CONFIG.adminKey) {
+                showMessage('adminMessage', 'error', 'Por favor verifica tu clave de administrador primero');
+                return;
+            }
+
+            const subject = document.getElementById('subject').value.trim();
+            const message = document.getElementById('message').value.trim();
+            const btn = document.getElementById('publishBtn');
+
+            if (!subject || !message) {
+                showMessage('adminMessage', 'error', 'Por favor completa asunto y mensaje');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading"></span> Enviando...';
+
+            try {
+                const response = await fetch(CONFIG.publishUrl, {
+                    method: 'POST',
+                    mode: 'cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        subject,
+                        message,
+                        admin_key: CONFIG.adminKey
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showMessage('adminMessage', 'success', data.message);
+                    document.getElementById('subject').value = '';
+                    document.getElementById('message').value = '';
+                } else {
+                    showMessage('adminMessage', 'error', data.error || 'Error al enviar');
+                }
+            } catch (error) {
+                showMessage('adminMessage', 'error', `Error: ${error.message}`);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = 'Enviar a Confirmados';
+            }
+        }
+
+        // ==================== UTILIDADES ====================
+        function showMessage(elementId, type, text) {
+            const element = document.getElementById(elementId);
+            element.className = `message ${type}`;
+            element.textContent = text;
+            element.style.display = 'block';
+
+            if (type !== 'error') {
+                setTimeout(() => {
+                    element.style.display = 'none';
+                }, 5000);
+            }
+        }
+    </script>
+</body>
+</html>

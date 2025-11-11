@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Newsletter Lab</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📧 Newsletter Lab</h1>
+            <p>Sistema de gestión de suscriptores con AWS</p>
+        </div>
+
+        <div class="content">
+            <!-- Panel de Registro -->
+            <div class="panel">
+                <h2>📝 Registrarse</h2>
+                <form id="registerForm">
+                    <div class="form-group">
+                        <label for="name">Nombre</label>
+                        <input type="text" id="name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" id="email" required>
+                    </div>
+                    <button type="submit">Registrarse</button>
+                    <div class="message" id="registerMessage"></div>
+                </form>
+            </div>
+
+            <!-- Panel de Administrador -->
+            <div class="panel">
+                <h2>🔐 Panel Administrador</h2>
+                <div class="form-group">
+                    <label for="adminKey">Clave de Admin</label>
+                    <input type="password" id="adminKey" placeholder="Ingresa la clave">
+                    <button onclick="verifyAdminKey()">Verificar</button>
+                    <div class="message" id="adminMessage"></div>
+                </div>
+                
+                <div id="adminPanel" style="display:none; margin-top: 20px;">
+                    <div class="form-group">
+                        <label for="subject">Asunto</label>
+                        <input type="text" id="subject">
+                    </div>
+                    <div class="form-group">
+                        <label for="message">Mensaje</label>
+                        <textarea id="message"></textarea>
+                    </div>
+                    <button onclick="handlePublish()">Enviar a Confirmados</button>
+
+                    <h3 style="margin-top: 20px; color: #667eea;">Suscriptores</h3>
+                    <button onclick="loadSubscribers()" style="margin-bottom: 10px;">Actualizar Suscriptores</button>
+                    <div id="subscribersList"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>Laboratorio de AWS SNS, Lambda y DynamoDB con CloudFormation</p>
+        </div>
+    </div>
+
+    <script src="config.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,592 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Newsletter Lab - Infrastructure with API Gateway (CORS Fix)'
+
+Parameters:
+  LabName:
+    Type: String
+    Default: nombre-newsletter
+    Description: Nombre único del laboratorio para evitar colisiones de recursos
+    AllowedPattern: '^[a-z0-9-]+$'
+    ConstraintDescription: Solo letras minúsculas, números y guiones
+
+Resources:
+  # ==================== SNS TOPIC ====================
+  NewsletterTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Sub '${LabName}-topic'
+      DisplayName: !Sub '${LabName} Topic'
+
+  # ==================== DYNAMODB TABLE ====================
+  SubscribersTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub '${LabName}-subscribers'
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: email
+          AttributeType: S
+      KeySchema:
+        - AttributeName: email
+          KeyType: HASH
+      StreamSpecification:
+        StreamViewType: NEW_AND_OLD_IMAGES
+
+  # ==================== CLOUDWATCH LOG GROUPS ====================
+  RegisterUserLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${LabName}-register-user'
+      RetentionInDays: 7
+
+  PublishMessageLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${LabName}-publish-message'
+      RetentionInDays: 7
+
+  GetSubscribersLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${LabName}-get-subscribers'
+      RetentionInDays: 7
+
+  # ==================== IAM ROLE ====================
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${LabName}-lambda-execution-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: DynamoDBAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:PutItem
+                  - dynamodb:GetItem
+                  - dynamodb:UpdateItem
+                  - dynamodb:Query
+                  - dynamodb:Scan
+                Resource: !GetAtt SubscribersTable.Arn
+        - PolicyName: SNSPublish
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - sns:Publish
+                  - sns:Subscribe
+                Resource: !GetAtt NewsletterTopic.TopicArn
+
+  # ==================== LAMBDA: REGISTER USER ====================
+  RegisterUserFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub '${LabName}-register-user'
+      Runtime: python3.11
+      Handler: index.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Environment:
+        Variables:
+          SUBSCRIBERS_TABLE: !Ref SubscribersTable
+          SNS_TOPIC_ARN: !GetAtt NewsletterTopic.TopicArn
+      Code:
+        ZipFile: |
+          import json
+          import boto3
+          import os
+          from datetime import datetime
+          import uuid
+
+          dynamodb = boto3.resource('dynamodb')
+          sns = boto3.client('sns')
+
+          table = dynamodb.Table(os.environ['SUBSCRIBERS_TABLE'])
+          topic_arn = os.environ['SNS_TOPIC_ARN']
+
+          def lambda_handler(event, context):
+              # Manejar preflight OPTIONS
+              if event.get('httpMethod') == 'OPTIONS':
+                  return {
+                      'statusCode': 200,
+                      'headers': {
+                          'Access-Control-Allow-Origin': '*',
+                          'Access-Control-Allow-Headers': 'Content-Type',
+                          'Access-Control-Allow-Methods': 'POST,OPTIONS'
+                      },
+                      'body': ''
+                  }
+
+              try:
+                  body = json.loads(event.get('body', '{}'))
+                  email = body.get('email', '').strip()
+                  name = body.get('name', '').strip()
+
+                  if not email or not name:
+                      return {
+                          'statusCode': 400,
+                          'headers': {
+                              'Content-Type': 'application/json',
+                              'Access-Control-Allow-Origin': '*',
+                              'Access-Control-Allow-Headers': 'Content-Type',
+                              'Access-Control-Allow-Methods': 'POST,OPTIONS'
+                          },
+                          'body': json.dumps({'error': 'Email y nombre son requeridos'})
+                      }
+
+                  response = table.get_item(Key={'email': email})
+                  if 'Item' in response:
+                      return {
+                          'statusCode': 409,
+                          'headers': {
+                              'Content-Type': 'application/json',
+                              'Access-Control-Allow-Origin': '*',
+                              'Access-Control-Allow-Headers': 'Content-Type',
+                              'Access-Control-Allow-Methods': 'POST,OPTIONS'
+                          },
+                          'body': json.dumps({'error': 'El email ya está registrado'})
+                      }
+
+                  confirmation_token = str(uuid.uuid4())
+
+                  table.put_item(
+                      Item={
+                          'email': email,
+                          'name': name,
+                          'confirmed': False,
+                          'confirmation_token': confirmation_token,
+                          'created_at': datetime.utcnow().isoformat(),
+                          'subscription_arn': None
+                      }
+                  )
+
+                  sub_response = sns.subscribe(
+                      TopicArn=topic_arn,
+                      Protocol='email',
+                      Endpoint=email,
+                      Attributes={'FilterPolicy': json.dumps({})}
+                  )
+
+                  table.update_item(
+                      Key={'email': email},
+                      UpdateExpression='SET subscription_arn = :arn',
+                      ExpressionAttributeValues={':arn': sub_response['SubscriptionArn']}
+                  )
+
+                  return {
+                      'statusCode': 201,
+                      'headers': {
+                          'Content-Type': 'application/json',
+                          'Access-Control-Allow-Origin': '*',
+                          'Access-Control-Allow-Headers': 'Content-Type',
+                          'Access-Control-Allow-Methods': 'POST,OPTIONS'
+                      },
+                      'body': json.dumps({
+                          'message': 'Usuario registrado. Por favor confirma tu suscripción en tu email',
+                          'email': email
+                      })
+                  }
+
+              except Exception as e:
+                  print(f'Error: {str(e)}')
+                  return {
+                      'statusCode': 500,
+                      'headers': {
+                          'Content-Type': 'application/json',
+                          'Access-Control-Allow-Origin': '*',
+                          'Access-Control-Allow-Headers': 'Content-Type',
+                          'Access-Control-Allow-Methods': 'POST,OPTIONS'
+                      },
+                      'body': json.dumps({'error': f'Error interno: {str(e)}'})
+                  }
+
+  # ==================== LAMBDA: PUBLISH MESSAGE ====================
+  PublishMessageFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub '${LabName}-publish-message'
+      Runtime: python3.11
+      Handler: index.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Environment:
+        Variables:
+          SUBSCRIBERS_TABLE: !Ref SubscribersTable
+          SNS_TOPIC_ARN: !GetAtt NewsletterTopic.TopicArn
+      Code:
+        ZipFile: |
+          import json
+          import boto3
+          import os
+          from datetime import datetime
+
+          dynamodb = boto3.resource('dynamodb')
+          sns = boto3.client('sns')
+
+          table = dynamodb.Table(os.environ['SUBSCRIBERS_TABLE'])
+          topic_arn = os.environ['SNS_TOPIC_ARN']
+
+          def lambda_handler(event, context):
+              # Manejar preflight OPTIONS
+              if event.get('httpMethod') == 'OPTIONS':
+                  return {
+                      'statusCode': 200,
+                      'headers': {
+                          'Access-Control-Allow-Origin': '*',
+                          'Access-Control-Allow-Headers': 'Content-Type',
+                          'Access-Control-Allow-Methods': 'POST,OPTIONS'
+                      },
+                      'body': ''
+                  }
+
+              try:
+                  body = json.loads(event.get('body', '{}'))
+                  subject = body.get('subject', '').strip()
+                  message = body.get('message', '').strip()
+                  admin_key = body.get('admin_key', '').strip()
+
+                  if admin_key != 'admin-secret-key-123':
+                      return {
+                          'statusCode': 403,
+                          'headers': {
+                              'Content-Type': 'application/json',
+                              'Access-Control-Allow-Origin': '*',
+                              'Access-Control-Allow-Headers': 'Content-Type',
+                              'Access-Control-Allow-Methods': 'POST,OPTIONS'
+                          },
+                          'body': json.dumps({'error': 'No autorizado'})
+                      }
+
+                  if not subject or not message:
+                      return {
+                          'statusCode': 400,
+                          'headers': {
+                              'Content-Type': 'application/json',
+                              'Access-Control-Allow-Origin': '*',
+                              'Access-Control-Allow-Headers': 'Content-Type',
+                              'Access-Control-Allow-Methods': 'POST,OPTIONS'
+                          },
+                          'body': json.dumps({'error': 'Asunto y mensaje son requeridos'})
+                      }
+
+                  response = table.scan(
+                      FilterExpression='confirmed = :confirmed',
+                      ExpressionAttributeValues={':confirmed': True}
+                  )
+
+                  confirmed_count = len(response.get('Items', []))
+
+                  formatted_message = f"{message}\n\n---\nEnviado: {datetime.utcnow().isoformat()}"
+
+                  sns.publish(
+                      TopicArn=topic_arn,
+                      Subject=subject,
+                      Message=formatted_message
+                  )
+
+                  return {
+                      'statusCode': 200,
+                      'headers': {
+                          'Content-Type': 'application/json',
+                          'Access-Control-Allow-Origin': '*',
+                          'Access-Control-Allow-Headers': 'Content-Type',
+                          'Access-Control-Allow-Methods': 'POST,OPTIONS'
+                      },
+                      'body': json.dumps({
+                          'message': '¡Mensaje Enviado!',
+                          'count': confirmed_count
+                      })
+                  }
+
+              except Exception as e:
+                  print(f'Error: {str(e)}')
+                  return {
+                      'statusCode': 500,
+                      'headers': {
+                          'Content-Type': 'application/json',
+                          'Access-Control-Allow-Origin': '*',
+                          'Access-Control-Allow-Headers': 'Content-Type',
+                          'Access-Control-Allow-Methods': 'POST,OPTIONS'
+                      },
+                      'body': json.dumps({'error': f'Error interno: {str(e)}'})
+                  }
+
+  # ==================== LAMBDA: GET SUBSCRIBERS ====================
+  GetSubscribersFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub '${LabName}-get-subscribers'
+      Runtime: python3.11
+      Handler: index.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Environment:
+        Variables:
+          SUBSCRIBERS_TABLE: !Ref SubscribersTable
+      Code:
+        ZipFile: |
+          import json
+          import boto3
+          import os
+
+          dynamodb = boto3.resource('dynamodb')
+          table = dynamodb.Table(os.environ['SUBSCRIBERS_TABLE'])
+
+          def lambda_handler(event, context):
+              # Manejar preflight OPTIONS
+              if event.get('httpMethod') == 'OPTIONS':
+                  return {
+                      'statusCode': 200,
+                      'headers': {
+                          'Access-Control-Allow-Origin': '*',
+                          'Access-Control-Allow-Headers': 'Content-Type',
+                          'Access-Control-Allow-Methods': 'GET,OPTIONS'
+                      },
+                      'body': ''
+                  }
+
+              try:
+                  admin_key = event.get('queryStringParameters', {}).get('admin_key', '') if event.get('queryStringParameters') else ''
+
+                  if admin_key != 'admin-secret-key-123':
+                      return {
+                          'statusCode': 403,
+                          'headers': {
+                              'Content-Type': 'application/json',
+                              'Access-Control-Allow-Origin': '*',
+                              'Access-Control-Allow-Headers': 'Content-Type',
+                              'Access-Control-Allow-Methods': 'GET,OPTIONS'
+                          },
+                          'body': json.dumps({'error': 'No autorizado'})
+                      }
+
+                  response = table.scan()
+                  items = response.get('Items', [])
+
+                  confirmed = sum(1 for item in items if item.get('confirmed'))
+                  not_confirmed = len(items) - confirmed
+
+                  return {
+                      'statusCode': 200,
+                      'headers': {
+                          'Content-Type': 'application/json',
+                          'Access-Control-Allow-Origin': '*',
+                          'Access-Control-Allow-Headers': 'Content-Type',
+                          'Access-Control-Allow-Methods': 'GET,OPTIONS'
+                      },
+                      'body': json.dumps({
+                          'total': len(items),
+                          'confirmed': confirmed,
+                          'not_confirmed': not_confirmed,
+                          'subscribers': items
+                      })
+                  }
+
+              except Exception as e:
+                  print(f'Error: {str(e)}')
+                  return {
+                      'statusCode': 500,
+                      'headers': {
+                          'Content-Type': 'application/json',
+                          'Access-Control-Allow-Origin': '*',
+                          'Access-Control-Allow-Headers': 'Content-Type',
+                          'Access-Control-Allow-Methods': 'GET,OPTIONS'
+                      },
+                      'body': json.dumps({'error': f'Error interno: {str(e)}'})
+                  }
+
+  # ==================== API GATEWAY ====================
+  NewsletterApi:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: !Sub '${LabName}-api'
+      Description: !Sub '${LabName} API'
+      EndpointConfiguration:
+        Types:
+          - REGIONAL
+
+  # Register Resource
+  RegisterResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref NewsletterApi
+      ParentId: !GetAtt NewsletterApi.RootResourceId
+      PathPart: register
+
+  RegisterMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref NewsletterApi
+      ResourceId: !Ref RegisterResource
+      HttpMethod: POST
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${RegisterUserFunction.Arn}/invocations'
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: true
+
+  RegisterPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref RegisterUserFunction
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${NewsletterApi}/*/*'
+
+  # Publish Resource
+  PublishResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref NewsletterApi
+      ParentId: !GetAtt NewsletterApi.RootResourceId
+      PathPart: publish
+
+  PublishMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref NewsletterApi
+      ResourceId: !Ref PublishResource
+      HttpMethod: POST
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${PublishMessageFunction.Arn}/invocations'
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: true
+
+  PublishPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref PublishMessageFunction
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${NewsletterApi}/*/*'
+
+  # Subscribers Resource
+  SubscribersResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref NewsletterApi
+      ParentId: !GetAtt NewsletterApi.RootResourceId
+      PathPart: subscribers
+
+  SubscribersMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref NewsletterApi
+      ResourceId: !Ref SubscribersResource
+      HttpMethod: GET
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GetSubscribersFunction.Arn}/invocations'
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: true
+
+  SubscribersPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref GetSubscribersFunction
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${NewsletterApi}/*/*'
+
+  # OPTIONS Methods - delegadas a Lambda
+  RegisterOptionsMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref NewsletterApi
+      ResourceId: !Ref RegisterResource
+      HttpMethod: OPTIONS
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${RegisterUserFunction.Arn}/invocations'
+
+  PublishOptionsMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref NewsletterApi
+      ResourceId: !Ref PublishResource
+      HttpMethod: OPTIONS
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${PublishMessageFunction.Arn}/invocations'
+
+  SubscribersOptionsMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref NewsletterApi
+      ResourceId: !Ref SubscribersResource
+      HttpMethod: OPTIONS
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GetSubscribersFunction.Arn}/invocations'
+
+  # Deployment
+  ApiDeployment:
+    Type: AWS::ApiGateway::Deployment
+    DependsOn:
+      - RegisterMethod
+      - RegisterOptionsMethod
+      - PublishMethod
+      - PublishOptionsMethod
+      - SubscribersMethod
+      - SubscribersOptionsMethod
+    Properties:
+      RestApiId: !Ref NewsletterApi
+      StageName: prod
+
+Outputs:
+  NewsletterTopicArn:
+    Description: ARN del tema SNS
+    Value: !GetAtt NewsletterTopic.TopicArn
+    Export:
+      Name: !Sub '${LabName}-TopicArn'
+
+  SubscribersTableName:
+    Description: Nombre de la tabla DynamoDB
+    Value: !Ref SubscribersTable
+    Export:
+      Name: !Sub '${LabName}-SubscribersTableName'
+
+  ApiEndpoint:
+    Description: API Gateway Endpoint
+    Value: !Sub 'https://${NewsletterApi}.execute-api.${AWS::Region}.amazonaws.com/prod'
+    Export:
+      Name: !Sub '${LabName}-ApiEndpoint'

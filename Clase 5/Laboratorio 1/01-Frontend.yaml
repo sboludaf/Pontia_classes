@@ -1,0 +1,63 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Newsletter Lab - Frontend Layer (S3 Static Web Hosting)'
+
+Parameters:
+  LabName:
+    Type: String
+    Default: nombre-newsletter
+    Description: Nombre único del laboratorio para evitar colisiones de recursos
+    AllowedPattern: '^[a-z0-9-]+$'
+    ConstraintDescription: Solo letras minúsculas, números y guiones
+
+Resources:
+  # ==================== S3 BUCKET PARA STATIC WEB HOSTING ====================
+  FrontendBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub '${LabName}-${AWS::AccountId}'
+      VersioningConfiguration:
+        Status: Enabled
+      WebsiteConfiguration:
+        IndexDocument: index.html
+        ErrorDocument: index.html
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: false
+        BlockPublicPolicy: false
+        IgnorePublicAcls: false
+        RestrictPublicBuckets: false
+
+  # ==================== BUCKET POLICY ====================
+  FrontendBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref FrontendBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal: '*'
+            Action: 's3:GetObject'
+            Resource: !Sub '${FrontendBucket.Arn}/*'
+          - Effect: Allow
+            Principal: '*'
+            Action: 's3:ListBucket'
+            Resource: !GetAtt FrontendBucket.Arn
+
+Outputs:
+  BucketName:
+    Description: Nombre del bucket S3
+    Value: !Ref FrontendBucket
+    Export:
+      Name: !Sub '${LabName}-BucketName'
+
+  WebsiteUrl:
+    Description: URL del website S3 Static Hosting
+    Value: !GetAtt FrontendBucket.WebsiteURL
+    Export:
+      Name: !Sub '${LabName}-WebsiteUrl'
+
+  BucketArn:
+    Description: ARN del bucket S3
+    Value: !GetAtt FrontendBucket.Arn
+    Export:
+      Name: !Sub '${LabName}-BucketArn'
