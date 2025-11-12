@@ -172,7 +172,6 @@ cdk deploy --app "python3 cdk_app.py --lab-name rag-lab-alumno --stack storage" 
 
 **Qué se crea:**
 - S3 Bucket para documentos: `rag-lab-alumno-documents-{ACCOUNT_ID}`
-- S3 Bucket para frontend: `rag-lab-alumno-frontend-{ACCOUNT_ID}`
 - DynamoDB Table: `rag-lab-alumno-documents`
 - DynamoDB Table: `rag-lab-alumno-queries`
 - IAM Role para Kendra con permisos CloudWatch Logs
@@ -239,6 +238,7 @@ cdk deploy --all --app "python3 cdk_app.py --lab-name rag-lab-alumno --stack fro
 ```
 
 Este comando:
+- S3 Bucket para frontend: `rag-lab-alumno-frontend-{ACCOUNT_ID}`
 - Sube el frontend (`index.html`, `styles.css`, `app.js`) al bucket S3
 - Inyecta automáticamente la URL del API Gateway en el frontend
 - Configura el website hosting en S3

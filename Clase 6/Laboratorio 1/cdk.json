@@ -1,8 +1,0 @@
-{
-  "app": "python3 cdk_app.py",
-  "context": {
-    "lab_name": "rag-lab",
-    "region": "eu-west-1",
-    "upload_frontend": false
-  }
-}
