@@ -1,0 +1,8 @@
+{
+  "app": "python3 cdk_app.py",
+  "context": {
+    "lab_name": "safety-vision-finn",
+    "region": "eu-west-1",
+    "upload_frontend": false
+  }
+}

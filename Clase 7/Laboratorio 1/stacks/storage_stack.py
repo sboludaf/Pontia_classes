@@ -68,7 +68,6 @@ class StorageStack(Stack):
             sort_key=dynamodb.Attribute(name="timestamp", type=dynamodb.AttributeType.STRING),
             billing_mode=dynamodb.BillingMode.PAY_PER_REQUEST,
             removal_policy=RemovalPolicy.DESTROY,
-            point_in_time_recovery=True,
             stream=dynamodb.StreamViewType.NEW_AND_OLD_IMAGES,
             encryption=dynamodb.TableEncryption.AWS_MANAGED,
         )
@@ -89,7 +88,6 @@ class StorageStack(Stack):
             sort_key=dynamodb.Attribute(name="date", type=dynamodb.AttributeType.STRING),
             billing_mode=dynamodb.BillingMode.PAY_PER_REQUEST,
             removal_policy=RemovalPolicy.DESTROY,
-            point_in_time_recovery=True,
             encryption=dynamodb.TableEncryption.AWS_MANAGED,
         )
         
@@ -186,6 +184,32 @@ class StorageStack(Stack):
                                 self.stats_table.table_arn,
                                 f"{self.analysis_table.table_arn}/index/*",
                                 f"{self.stats_table.table_arn}/index/*",
+                            ],
+                        )
+                    ]
+                ),
+                "LambdaAccess": iam.PolicyDocument(
+                    statements=[
+                        iam.PolicyStatement(
+                            effect=iam.Effect.ALLOW,
+                            actions=[
+                                "lambda:InvokeFunction",
+                            ],
+                            resources=[
+                                f"arn:aws:lambda:*:*:function:{self._lab_name}-*",
+                            ],
+                        )
+                    ]
+                ),
+                "SNSAccess": iam.PolicyDocument(
+                    statements=[
+                        iam.PolicyStatement(
+                            effect=iam.Effect.ALLOW,
+                            actions=[
+                                "sns:Publish",
+                            ],
+                            resources=[
+                                f"arn:aws:sns:*:*:{self._lab_name}-*",
                             ],
                         )
                     ]
