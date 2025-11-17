@@ -1,0 +1,46 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'CloudFormation Stack to create a Bedrock Agent Role with required policies'
+
+Resources:
+  # IAM Role for Bedrock Agents
+  BedrockAgentsRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: BedrockAgentsRole
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: bedrock.amazonaws.com
+            Action: sts:AssumeRole
+            Condition:
+              StringEquals:
+                'aws:SourceAccount': !Ref AWS::AccountId
+              ArnLike:
+                'aws:SourceArn': !Sub 'arn:aws:bedrock:${AWS::Region}:${AWS::AccountId}:agent/*'
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonBedrockFullAccess
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaRole
+      Tags:
+        - Key: Name
+          Value: BedrockAgentsRole
+
+Outputs:
+  RoleName:
+    Description: Name of the Bedrock Agents Role
+    Value: !Ref BedrockAgentsRole
+    Export:
+      Name: !Sub '${AWS::StackName}-RoleName'
+
+  RoleArn:
+    Description: ARN of the Bedrock Agents Role
+    Value: !GetAtt BedrockAgentsRole.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-RoleArn'
+
+  RoleId:
+    Description: ID of the Bedrock Agents Role
+    Value: !GetAtt BedrockAgentsRole.RoleId
+    Export:
+      Name: !Sub '${AWS::StackName}-RoleId'

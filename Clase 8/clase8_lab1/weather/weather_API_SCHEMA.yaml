@@ -1,0 +1,49 @@
+openapi: 3.0.1
+info:
+  title: WeatherLambdaAPI
+  version: '1.0'
+paths:
+  /get-current-weather:
+    post:
+      operationId: getCurrentWeather
+      description: Get current weather for a given city name.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                city:
+                  type: string
+                  example: "Madrid"
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  city:
+                    type: string
+                  country:
+                    type: string
+                  temperature_c:
+                    type: number
+                  windspeed_kmh:
+                    type: number
+                  time:
+                    type: string
+                  text:
+                    type: string
+              example:
+                ok: true
+                city: "Madrid"
+                country: "Spain"
+                temperature_c: 12.1
+                windspeed_kmh: 11.3
+                time: "2025-11-16T17:00"
+                text: "En Madrid - Spain ahora mismo son 12.1°C ..."
