@@ -2,7 +2,7 @@
   "app": "python cdk_app.py",
   "require_approval": "never",
   "context": {
-    "lab_name": "seguridad-lab-finn",
+    "lab_name": "clase7-lab1-sboludaf2",
     "region": "eu-west-1"
   }
 }

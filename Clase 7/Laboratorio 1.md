@@ -47,7 +47,96 @@ cdk deploy --require-approval never
 
 ---
 
-## 📚 Despliegue Paso a Paso
+## � Ejecución Local con Python
+
+Si prefieres ejecutar el proyecto localmente en tu máquina:
+
+### Requisitos Previos
+- Python 3.9+
+- Node.js 18+
+- AWS CLI configurado con credenciales
+- AWS CDK CLI instalado
+
+### Pasos de Instalación y Despliegue
+
+#### 1. Crear entorno virtual
+
+```bash
+# Navegar a la carpeta del proyecto
+cd clase7_lab1
+
+# Crear entorno virtual
+python3 -m venv venv
+
+# Activar entorno virtual
+source venv/bin/activate  # En macOS/Linux
+# o
+venv\Scripts\activate  # En Windows
+```
+
+#### 2. Instalar dependencias
+
+```bash
+# Instalar dependencias Python
+pip install -r requirements.txt
+
+# Verificar que aws-cdk-lib está instalado
+pip list | grep aws-cdk-lib
+```
+
+#### 3. Configurar el proyecto
+
+Edita `cdk.json` con tu nombre único:
+
+```json
+{
+  "app": "python cdk_app.py",
+  "require_approval": "never",
+  "context": {
+    "lab_name": "clase7-lab1-tu-nombre",
+    "region": "eu-west-1"
+  }
+}
+```
+
+#### 4. Desplegar la infraestructura
+
+```bash
+# Activar el entorno virtual (si no está activo)
+source venv/bin/activate
+
+# Desplegar con CDK
+cdk deploy --require-approval never
+```
+
+#### 5. Actualizar la URL del frontend
+
+Después del despliegue, ejecuta el script para actualizar la URL del API:
+
+```bash
+# Activar el entorno virtual (si no está activo)
+source venv/bin/activate
+
+# Ejecutar script de actualización
+python3 update_frontend_url.py
+```
+
+Este script:
+- Obtiene la URL del API Gateway desde CloudFormation
+- Actualiza el archivo `frontend/app.js` con la URL correcta
+- Sube el archivo actualizado al bucket S3
+
+#### 6. Acceder a la aplicación
+
+La URL del frontend se mostrará en los outputs:
+
+```
+FrontendURL = http://clase7-lab1-tu-nombre-{ACCOUNT_ID}-eu-west-1.s3-website-eu-west-1.amazonaws.com
+```
+
+---
+
+## �📚 Despliegue Paso a Paso
 
 ### Paso 1 – Preparar el archivo ZIP localmente
 

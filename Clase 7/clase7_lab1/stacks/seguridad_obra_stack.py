@@ -160,32 +160,16 @@ class SeguridadObraStack(cdk.Stack):
         # Crear recurso /analyze
         analyze_resource = self.api.root.add_resource("analyze")
 
-        # Configurar integración con Lambda
+        # Configurar integración con Lambda (proxy=True para que Lambda maneje la respuesta)
         lambda_integration = apigateway.LambdaIntegration(
             self.lambda_function,
-            proxy=True,
-            integration_responses=[
-                apigateway.IntegrationResponse(
-                    status_code="200",
-                    response_parameters={
-                        "method.response.header.Access-Control-Allow-Origin": "'*'"
-                    }
-                )
-            ]
+            proxy=True
         )
 
         # Configurar método POST
         analyze_resource.add_method(
             "POST",
-            lambda_integration,
-            method_responses=[
-                apigateway.MethodResponse(
-                    status_code="200",
-                    response_parameters={
-                        "method.response.header.Access-Control-Allow-Origin": True
-                    }
-                )
-            ]
+            lambda_integration
         )
 
     def deploy_frontend(self):

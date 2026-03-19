@@ -1,9 +1,3 @@
 aws-cdk-lib==2.100.0
-aws-cdk-aws-apigateway==2.100.0
-aws-cdk-aws-dynamodb==2.100.0
-aws-cdk-aws-lambda==2.100.0
-aws-cdk-aws-s3==2.100.0
-aws-cdk-aws-s3-deployment==2.100.0
-aws-cdk-aws-iam==2.100.0
 boto3==1.34.0
 botocore==1.34.0

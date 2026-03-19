@@ -144,7 +144,7 @@ class SafetyDetectionApp {
 
     async callAnalysisAPI(base64Image) {
         // API Gateway endpoint
-        const apiUrl = 'https://4daadw7mjl.execute-api.us-east-1.amazonaws.com/prod/analyze';
+        const apiUrl = 'API_URL';
         
         console.log('🚀 Llamando a API Gateway:', apiUrl);
         
