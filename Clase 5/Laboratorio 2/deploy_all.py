@@ -348,8 +348,8 @@ def main():
     )
     parser.add_argument(
         "--account",
-        default="838205824064",
-        help="AWS Account ID (default: 838205824064)",
+        default=os.getenv("AWS_ACCOUNT_ID", "838205824064"),
+        help="AWS Account ID (default: from AWS_ACCOUNT_ID env var or 838205824064)",
     )
     parser.add_argument(
         "--region",
