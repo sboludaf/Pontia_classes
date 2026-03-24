@@ -127,22 +127,25 @@ Por favor, responde la pregunta basándote en el contexto proporcionado."""
         
         try:
             bedrock_response = bedrock_client.invoke_model(
-                modelId="amazon.titan-text-express-v1",
+                modelId="global.amazon.nova-2-lite-v1:0",
                 contentType="application/json",
                 accept="application/json",
                 body=json.dumps({
-                    "inputText": user_message,
-                    "textGenerationConfig": {
-                        "maxTokenCount": 1024,
-                        "stopSequences": [],
-                        "temperature": 0.7,
-                        "topP": 0.9
-                    }
+                    "messages": [
+                        {
+                            "role": "user",
+                            "content": [
+                                {
+                                    "text": user_message
+                                }
+                            ]
+                        }
+                    ]
                 }),
             )
             
             response_body = json.loads(bedrock_response["body"].read())
-            answer = response_body["results"][0]["outputText"]
+            answer = response_body["output"]["message"]["content"][0]["text"]
             
             print(f"Respuesta generada: {answer[:100]}...")
         except Exception as e:

@@ -93,11 +93,8 @@ class LambdaStack(cdk.Stack):
         lambda_role.add_to_policy(
             iam.PolicyStatement(
                 effect=iam.Effect.ALLOW,
-                actions=["bedrock:InvokeModel"],
-                resources=[
-                    "arn:aws:bedrock:*:*:foundation-model/anthropic.claude-3-*",
-                    "arn:aws:bedrock:*:*:foundation-model/amazon.titan-text-*"
-                ],
+                actions=["bedrock:*"],
+                resources=["*"],
             )
         )
         
