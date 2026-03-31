@@ -10,7 +10,7 @@ Crear un agente de Bedrock que integre dos funciones Lambda (DateTimeFunction y 
 1. Ve a la consola de AWS Lambda
 2. Haz clic en **Create function**
 3. Configura:
-   - **Function name**: `DateTimeFunction-sboludaf`
+   - **Function name**: `DateTimeFunction-alumno`
    - **Runtime**: Python 3.12
    - **Architecture**: x86_64
 4. Haz clic en **Create function**
@@ -35,7 +35,7 @@ Crear un agente de Bedrock que integre dos funciones Lambda (DateTimeFunction y 
 4. Configura:
    - **Principal**: `bedrock.amazonaws.com`
    - **Action**: `lambda:InvokeFunction`
-   - **Resource ARN**: `arn:aws:bedrock:eu-west-1:838205824064:agent/*`
+   - **Resource ARN**: `arn:aws:bedrock:eu-west-1:ACCOUNT_ID:agent/*`
 5. Haz clic en **Save**
 
 ---
@@ -45,7 +45,7 @@ Crear un agente de Bedrock que integre dos funciones Lambda (DateTimeFunction y 
 1. Ve a la consola de AWS Lambda
 2. Haz clic en **Create function**
 3. Configura:
-   - **Function name**: `WeatherFunction-sboludaf`
+   - **Function name**: `WeatherFunction-alumno`
    - **Runtime**: Python 3.11
    - **Architecture**: x86_64
 4. Haz clic en **Create function**
@@ -70,7 +70,7 @@ Crear un agente de Bedrock que integre dos funciones Lambda (DateTimeFunction y 
 4. Configura:
    - **Principal**: `bedrock.amazonaws.com`
    - **Action**: `lambda:InvokeFunction`
-   - **Resource ARN**: `arn:aws:bedrock:eu-west-1:838205824064:agent/*`
+   - **Resource ARN**: `arn:aws:bedrock:eu-west-1:ACCOUNT_ID:agent/*`
 5. Haz clic en **Save**
 
 ---
@@ -81,7 +81,7 @@ Crear un agente de Bedrock que integre dos funciones Lambda (DateTimeFunction y 
 2. En el panel izquierdo, selecciona **Agents** bajo **Builder tools**
 3. Haz clic en **Create agent**
 4. Configura:
-   - **Name**: `MyBedrockAgent-sboludaf`
+   - **Name**: `MyBedrockAgent-alumno`
    - **Description**: (Opcional) Agente con acceso a funciones de tiempo y clima
 5. Haz clic en **Create**
 
@@ -146,7 +146,7 @@ Crear un agente de Bedrock que integre dos funciones Lambda (DateTimeFunction y 
 ## Paso 14: Select an existing Lambda function
 
 1. En **Action group invocation**, selecciona: **Select an existing Lambda function**
-2. En el dropdown, selecciona: `DateTimeFunction-sboludaf`
+2. En el dropdown, selecciona: `DateTimeFunction-alumno`
 3. Haz clic en **Next**
 
 ---
@@ -197,7 +197,7 @@ Crear un agente de Bedrock que integre dos funciones Lambda (DateTimeFunction y 
 
 1. En **Action group type**, selecciona: **Define with API schemas**
 2. En **Action group invocation**, selecciona: **Select an existing Lambda function**
-3. Selecciona: `WeatherFunction-sboludaf`
+3. Selecciona: `WeatherFunction-alumno`
 4. En **Action group schema**, selecciona: **Define via S3 URL**
 5. Ingresa la URL: `s3://clase8-lab1/weather/Weather_API_SCHEMA.yaml`
 6. Haz clic en **Create**
@@ -253,7 +253,7 @@ Hola, ¿puedes ayudarme con información sobre el clima en París?
 ## Verificación Final
 
 ✅ Ambas funciones Lambda están creadas y tienen permisos de Bedrock
-✅ El agente está configurado con el rol `BedrockAgentsRole-sboludaf`
+✅ El agente está configurado con el rol `BedrockAgentsRole-alumno`
 ✅ El modelo es Amazon Nova Micro
 ✅ Ambos Action Groups están configurados y funcionando
 ✅ El agente responde correctamente a consultas sobre hora y clima
@@ -265,6 +265,6 @@ Hola, ¿puedes ayudarme con información sobre el clima en París?
 - **Bucket S3**: `s3://clase8-lab1/`
   - TIME: `s3://clase8-lab1/TIME/`
   - Weather: `s3://clase8-lab1/weather/`
-- **Rol IAM**: `BedrockAgentsRole-sboludaf`
+- **Rol IAM**: `BedrockAgentsRole-alumno`
 - **Región**: `eu-west-1` (West Europe)
 
