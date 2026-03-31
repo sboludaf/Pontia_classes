@@ -34,7 +34,7 @@ def update_frontend_url(api_url, frontend_bucket, region):
     try:
         # Leer app.js local
         print(f"📝 Leyendo archivo local frontend/app.js...")
-        with open("frontend/app.js", "r") as f:
+        with open("frontend/app.js", "r", encoding="utf-8") as f:
             app_js_content = f.read()
         
         # Reemplazar la URL
@@ -43,7 +43,7 @@ def update_frontend_url(api_url, frontend_bucket, region):
         
         # Guardar cambios localmente
         print(f"💾 Guardando cambios en frontend/app.js...")
-        with open("frontend/app.js", "w") as f:
+        with open("frontend/app.js", "w", encoding="utf-8") as f:
             f.write(updated_content)
         
         # Subir el archivo actualizado al bucket
